@@ -110,11 +110,7 @@ int main(void)
                     char temperature_sign[2];
                     
                     temperature_sign[1] = 0;
-
-                    if (temperature < 0 )
-                        temperature_sign[0] = '-';
-                    else
-                        temperature_sign[0] = 0;
+                    temperature_sign[0] = (temperature < 0)  ? '-' : 0;
                         
                     printf("Temperature sensor @ Index %d: Degrees C: %s%u.%u\r\n", i, temperature_sign, (temperature / 10), (temperature % 10));
                 }
