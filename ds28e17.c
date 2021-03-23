@@ -25,6 +25,7 @@
 #include "onewire.h"
 #include "ds28e17.h"
 #include "ds2482.h"
+#include "ow_bitbang.h"
 #include "crc16_arc.h"
 
 /* DS28E17 device command codes. */
