@@ -49,11 +49,8 @@ int main(void)
     uint8_t num_sensors;
     uint8_t num_temp_sensors;
     uint8_t num_light_sensors;
-    uint8_t light_sensors_mask;
     uint8_t ow_device_types[2];
     uint8_t ow_device_counts[2];
-
-    light_sensors_mask = 0;
 
     io_init();
     g_irq_enable();
@@ -80,7 +77,6 @@ int main(void)
         {
             if (sensor_ids[i][0] == DS28E17_FAMILY_CODE)
             {
-                light_sensors_mask |= (1 << i);
                 ds28e17_init(sensor_ids[i]);
                 veml7700_init(sensor_ids[i]);
             }
@@ -94,8 +90,11 @@ int main(void)
         for (i = 0; i < num_sensors; i++)
         {
             // Don't broadcast 'start measure' command. DS28E17's don't know what to do with it.
-            if ((light_sensors_mask & (1 << i)) == 0)
-                ds18b20_start_meas(sensor_ids[i]);
+            if (sensor_ids[i][0] == DS18B20_FAMILY_CODE)
+            {
+                if (!ds18b20_start_meas(sensor_ids[i]))
+                    printf("Error starting measurement on temperature sensor %d\r\n", i);
+            }
         }
 
         _delay_ms(1000);
@@ -119,14 +118,22 @@ int main(void)
                         
                     printf("Temperature sensor @ Index %d: Degrees C: %s%u.%u\r\n", i, temperature_sign, (temperature / 10), (temperature % 10));
                 }
+                else
+                {
+                    printf("Error reading from temperature sensor sensor %d\r\n", i);
+                }
             }
             if (sensor_ids[i][0] == DS28E17_FAMILY_CODE)
             {
                 uint32_t lux; // single fixed point. i.e. 10 = 1.0 lux
 
-                if (veml7700_read_lux(sensor_ids[i], (uint32_t *)&lux))
+                if (veml7700_read_decilux(sensor_ids[i], (uint32_t *)&lux))
                 {
                     printf("Light sensor       @ Index %d:       Lux: %lu.%lu\r\n", i, (lux / 10), (lux % 10));
+                }
+                else
+                {
+                    printf("Error reading from light sensor sensor %d\r\n", i);
                 }
             }
         }

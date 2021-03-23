@@ -20,6 +20,6 @@
 #define __VEML7700_H__
 
 bool veml7700_init(const uint8_t *host_id);
-bool veml7700_read_lux(const uint8_t *host_id, uint32_t *lux);
+bool veml7700_read_decilux(const uint8_t *host_id, uint32_t *lux);
 
 #endif /* __VEML7700_H__ */
