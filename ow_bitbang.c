@@ -2,10 +2,9 @@
  *   File:   ow_bitbang.c
  *   Author: Matthew Millman
  *
- *   Fan speed controller. OSS AVR Version.
+ *   Multi-project 1-wire bitbang driver
  *
  *   Created on 26 August 2014, 20:27
- *   Ported from MPLAB XC8 project 17 December 2020, 07:54
  *
  *   This is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
