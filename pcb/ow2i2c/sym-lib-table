@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name bec-interface)(type Legacy)(uri ${KIPRJMOD}/bec-interface.lib)(options "")(descr ""))
+)
