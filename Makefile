@@ -10,7 +10,7 @@
 COREUTILS  = C:/Projects/coreutils/bin/
 
 CLOCK      = 16000000
-SRCS       = main.c onewire.c ds18b20.c veml7700.c ds28e17.c ds2482.c ow_bitbang.c i2c.c util.c crc8.c crc16_arc.c usart_buffered.c
+SRCS       = main.c onewire.c ds18b20.c veml7700.c mcp9808.c ds28e17.c ds2482.c ow_bitbang.c i2c.c util.c crc8.c crc16_arc.c usart_buffered.c
 OBJS       = $(SRCS:.c=.o)
 DEPDIR     = deps
 DEPFLAGS   = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td

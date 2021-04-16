@@ -35,6 +35,7 @@
 #include "ds28e17.h"
 #include "ds18b20.h"
 #include "veml7700.h"
+#include "mcp9808.h"
 #include "usart.h"
 #include "util.h"
 
@@ -42,13 +43,19 @@ FILE uart_str = FDEV_SETUP_STREAM(print_char, NULL, _FDEV_SETUP_RW);
 
 static void io_init(void);
 
+#define DEV_UNKNOWN     0
+#define DEV_DS18B20     1
+#define DEV_VEML7700    2
+#define DEV_MPC9808     3
+
 int main(void)
 {
     uint8_t i;
     uint8_t sensor_ids[MAX_SENSORS][OW_ROMCODE_SIZE];
+    uint8_t dev_types[MAX_SENSORS];
     uint8_t num_sensors;
     uint8_t num_temp_sensors;
-    uint8_t num_light_sensors;
+    uint8_t num_bridged_devs;
     uint8_t ow_device_types[2];
     uint8_t ow_device_counts[2];
 
@@ -68,22 +75,38 @@ int main(void)
         printf("Hardware error searching for sensors\r\n");
 
     num_temp_sensors = ow_device_counts[0];
-    num_light_sensors = ow_device_counts[1];
-    num_sensors = num_temp_sensors + num_light_sensors;
+    num_bridged_devs = ow_device_counts[1];
+    num_sensors = num_temp_sensors + num_bridged_devs;
 
-    if (num_light_sensors)
+    if (num_bridged_devs)
     {
         for (i = 0; i < num_sensors; i++)
         {
+            dev_types[i] = DEV_UNKNOWN;
+
             if (sensor_ids[i][0] == DS28E17_FAMILY_CODE)
             {
                 ds28e17_init(sensor_ids[i]);
-                veml7700_init(sensor_ids[i]);
+
+                if (mcp9808_present(sensor_ids[i]))
+                {
+                    dev_types[i] = DEV_MPC9808;
+                }
+                else
+                {
+                    dev_types[i] = DEV_VEML7700; //Can't easily probe VEML7700 so assume it's this if not MCP9808
+                    veml7700_init(sensor_ids[i]);
+                }
+            }
+
+            if (sensor_ids[i][0] == DS18B20_FAMILY_CODE)
+            {
+                dev_types[i] = DEV_DS18B20;
             }
         }
     }
 
-    printf("Found %u temperature and %u light sensors of %u total\r\n\r\n", num_temp_sensors, num_light_sensors, MAX_SENSORS);
+    printf("Found %u native and %u bridged sensors of %u total\r\n\r\n", num_temp_sensors, num_bridged_devs, MAX_SENSORS);
 
     for (;;)
     {
@@ -92,7 +115,7 @@ int main(void)
             // Don't broadcast 'start measure' command. DS28E17's don't know what to do with it.
             if (sensor_ids[i][0] == DS18B20_FAMILY_CODE)
             {
-                if (!ds18b20_start_meas(sensor_ids[i]))
+                if (!ds18b20_start_measure(sensor_ids[i]))
                     printf("Error starting measurement on temperature sensor %d\r\n", i);
             }
         }
@@ -101,7 +124,7 @@ int main(void)
 
         for (i = 0; i < num_sensors; i++)
         {
-            if (sensor_ids[i][0] == DS18B20_FAMILY_CODE)
+            if (dev_types[i] == DEV_DS18B20)
             {
                 int16_t temperature; // single fixed point i.e. 10 = 1.0 degrees
 
@@ -112,25 +135,47 @@ int main(void)
                     temperature_sign[1] = 0;
                     temperature_sign[0] = (temperature < 0)  ? '-' : 0;
                         
-                    printf("Temperature sensor @ Index %d: Degrees C: %s%u.%u\r\n", i, temperature_sign, (abs(temperature) / 10), (abs(temperature) % 10));
+                    printf("DS18B20 sensor     @ Index %d: Degrees C: %s%u.%u\r\n", i, temperature_sign, (abs(temperature) / 10), (abs(temperature) % 10));
                 }
                 else
                 {
-                    printf("Error reading from temperature sensor sensor %d\r\n", i);
+                    printf("Error reading from DS18B20 sensor %d\r\n", i);
                 }
             }
-            if (sensor_ids[i][0] == DS28E17_FAMILY_CODE)
+            else if (dev_types[i] == DEV_MPC9808)
+            {
+                int16_t temperature; // single fixed point i.e. 10 = 1.0 degrees
+
+                if (mcp9808_read_decicelsius(sensor_ids[i], (int16_t *)&temperature))
+                {
+                    char temperature_sign[2];
+                    
+                    temperature_sign[1] = 0;
+                    temperature_sign[0] = (temperature < 0)  ? '-' : 0;
+                        
+                    printf("MCP9808 sensor     @ Index %d: Degrees C: %s%u.%u\r\n", i, temperature_sign, (abs(temperature) / 10), (abs(temperature) % 10));
+                }
+                else
+                {
+                    printf("Error reading from MPC9808 sensor %d\r\n", i);
+                }
+            }
+            else if (dev_types[i] == DEV_VEML7700)
             {
                 uint32_t lux; // single fixed point. i.e. 10 = 1.0 lux
 
                 if (veml7700_read_decilux(sensor_ids[i], (uint32_t *)&lux))
                 {
-                    printf("Light sensor       @ Index %d:       Lux: %lu.%lu\r\n", i, (lux / 10), (lux % 10));
+                    printf("VEML7700 sensor    @ Index %d:       Lux: %lu.%lu\r\n", i, (lux / 10), (lux % 10));
                 }
                 else
                 {
-                    printf("Error reading from light sensor sensor %d\r\n", i);
+                    printf("Error reading from VEML7700 sensor %d\r\n", i);
                 }
+            }
+            else
+            {
+                printf("Unknown sensor     @ Index %d\r\n", i);
             }
         }
 

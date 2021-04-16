@@ -1,8 +1,8 @@
 /*
- *   File:   ds18b20.h
+ *   File:   mcp9808.h
  *   Author: Matt
  *
- *   Created on 26 July 2016, 11:13
+ *   Created on 12 July 2016, 10:32
  * 
  *   This is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -16,16 +16,17 @@
  *   along with this software.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __DS18B20_H__
-#define __DS18B20_H__
+#ifndef __MCP9808_H__
+#define __MCP9808_H__
 
-#define DS18B20_FAMILY_CODE         0x28
+#include "project.h"
 
-#define DS18B20_TCONV_12BIT         750
+#include <stdint.h>
+#include <stdbool.h>
 
-bool ds18b20_find_sensor(uint8_t *diff, uint8_t *id);
-bool ds18b20_start_measure(uint8_t *id);
-bool ds18b20_read_decicelsius(uint8_t *id, int16_t *decicelsius);
-bool ds18b20_search_sensors(uint8_t *count, uint8_t(*sensor_ids)[OW_ROMCODE_SIZE]);
+#define MCP9808_I2CADDR_BASE           0x18
 
-#endif /* __DS18B20_H__ */
+bool mcp9808_present(uint8_t *host);
+bool mcp9808_read_decicelsius(uint8_t *host, int16_t *result);
+
+#endif /* __MCP9808_H__ */

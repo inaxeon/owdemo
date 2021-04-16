@@ -119,7 +119,7 @@ bool ds18b20_read_decicelsius(uint8_t *id, int16_t *decicelsius)
     return true;
 }
 
-bool ds18b20_start_meas(uint8_t *id)
+bool ds18b20_start_measure(uint8_t *id)
 {
     uint8_t data = DS18B20_CONVERT_T;
     

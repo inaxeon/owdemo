@@ -31,6 +31,8 @@ int print_char(char byte, FILE *stream);
 #define strncmp_p(str, to, n) strncmp_P(str, PSTR(to), n)
 #define stricmp(str, to) strcasecmp_P(str, PSTR(to))
 
+#define SWAP16(x) (((x) >> 8) | ((x) << 8))
+
 #define _1DP_BASE 10
 #define _2DP_BASE 100
 
